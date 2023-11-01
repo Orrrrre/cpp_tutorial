@@ -5,7 +5,7 @@
 
 ---
 
-![rock](markdown_pics/shiprock.c3b9a023.jpg "Let's Go!")
+![intro](markdown_pics/intro.png "Let's Go!")
 
 ## reference "&"
 
@@ -26,6 +26,8 @@
 ---
 
 ## Static
+
+![static](markdown_pics/static.png "Control")
 
 1. ### [**class和struct外部的static**](global_is_terrible "可以类比class中的private global is terrible")
 
@@ -159,6 +161,8 @@
 
 ## enum
 
+![enum](markdown_pics/enum.png "Control")
+
 * 他只是一种命名方法
 * 枚举数就是一个整数,只能是整数🤯
 * 不同于枚举类
@@ -193,6 +197,8 @@ int main()
 ---
 
 ## 构造函数
+
+![consstructor](markdown_pics/constructor.png "Death Stranding")
 
 还是拿例子来说  
 以下是一个**不含构造函数的类**：
@@ -279,79 +285,85 @@ private:
 
 ## 析构函数
 
+![dextructor](markdown_pics/destructor.png "Death Stranding")
+
 析构函数在作用域结束时会将**栈对象**删除 **`or`** 在调用`delete`的时候将分配在**堆内存**中的对象删除
 
-```C++
-#include <iostream>
-如果尝试手动调用析构函数，但是此对象分配在栈空间时，当作用域结束，会再次调用析构函数，如下代码👇
-此时如果析构函数当中进行了某个内存的释放，可能会报错。
-(总之慎用显式调用析构函数，最好别用)
-class Example
-{
-public:
-    Example()
-    {
-        // initializing...
-    }
-    ~Example()
-    {
-        // destroying...
-    }
-};
+  ```C++
+  #include <iostream>
+  如果尝试手动调用析构函数，但是此对象分配在栈空间时，当作用域结束，会再次调用析构函数，如下代码👇
+  此时如果析构函数当中进行了某个内存的释放，可能会报错。
+  (总之慎用显式调用析构函数，最好别用)
+  class Example
+  {
+  public:
+      Example()
+      {
+          // initializing...
+      }
+      ~Example()
+      {
+          // destroying...
+      }
+  };
 
-void func()
-{
-    Example e1;
-}
+  void func()
+  {
+      Example e1;
+  }
 
-int main()
-{
-    func();
-    // func()函数作用域结束，再次调用析构函数
-    std::cin.get();
-    return 0;
-}
-```
+  int main()
+  {
+      func();
+      // func()函数作用域结束，再次调用析构函数
+      std::cin.get();
+      return 0;
+  }
+  ```
 
 ## 类的继承
 
+![inherit](markdown_pics/inherit.png "Elden Ring")
+
 * 为了代码复用，完成**父类👉派生类**这样一种高效的复用形式
-* 为了给基类扩展功
+* 为了给基类扩展功能
 
-```C++
-#include <iostream>
+  ```C++
+  #include <iostream>
 
-class Entity
-{
-public:
-    int X, Y;
-private:
-    int Z;
-};  
-    // ⚠：类内的静态成员只能由静态函数访问，在main函数中无法赋值操作(main中是动态的？static无法修饰main)
-    // 但是可以在创建类后立即在类外对静态成员赋值：假设成员Z为static int Z
-    // 赋值操作：int Entity::Z = 1;
+  class Entity
+  {
+  public:
+      int X, Y;
+  private:
+      int Z;
+  };  
+      // ⚠：类内的静态成员只能由静态函数访问，在main函数中无法赋值操作(main中是动态的？static无法修饰main)
+      // 但是可以在创建类后立即在类外对静态成员赋值：假设成员Z为static int Z
+      // 赋值操作：int Entity::Z = 1;
 
-class Example : public Entity
-{
-public:
-    int x, y;
-    void Print()
-    {
-        std::cout << x << ' ' << y;
-    }
-}
+  class Example : public Entity
+  {
+  public:
+      int x, y;
+      void Print()
+      {
+          std::cout << x << ' ' << y;
+      }
+  }
 
-int main()
-{
-    Entity E;
-    Example e;
-    std::cout << sizeof(E) << ' ' << sizeof(e) << std::endl;
-}
->>  12 20
-```
+  int main()
+  {
+      Entity E;
+      Example e;
+      std::cout << sizeof(E) << ' ' << sizeof(e) << std::endl;
+  }
+  >>  12 20
+  ```
 
 ## 虚函数
+
+![virtual function](markdown_pics/virtual.png "Cyberpunk 2077")
 
 既然类继承了，那么在子类中对父类的方法进行 👉**重写**吧😵  
 直接上例子：
@@ -407,7 +419,7 @@ int main()
   >**虚表(Vtable)**<sup>👆👇</sup>  
   >用处💡  
   1.当一个类包含虚拟函数时，编译器会在该类的对象中插入一个指向虚表的指针。这个指针指向了包含虚拟函数地址的虚表。当你调用一个虚拟函数时，实际上是通过虚表来查找正确的函数并执行它，而不是直接调用类的函数  
-  2.虚表会存**储子类重载（覆盖）的函数指针**。在继承层次结构中，如果子类重载了基类的虚拟函数，那么子类的虚拟函数实现将被放入虚表中，取代基类的实现。这使得在运行时，可以根据对象的实际类型来调用正确的函数，实现多态性。<br>
+  2.虚表会**存储子类重载（覆盖）的函数指针**。在继承层次结构中，如果子类重载了基类的虚拟函数，那么子类的虚拟函数实现将被放入虚表中，取代基类的实现。这使得在运行时，可以**根据对象的实际类型**来调用正确的函数，实现多态性。<br>
   >
   >缺点(空间&时间)⏰💥实际上这些影响并不大  
   1.消耗额外内存存储Vtable。  
@@ -434,7 +446,8 @@ int main()
   class Example : public Entity
   {
   public:
-      void Print_name() override  // 插入override关键字(C++11特性)表明子类的重载函数，并且这个关键字可以帮助提示错误
+      void Print_name() override  /* 插入override关键字(C++11特性)表明子类的重载函数，虽然不插入这个
+      关键字也能work，但这个关键字可以帮助提示错误且可读性更强*/
       {
           std::cout << name << std::endl;
       }
@@ -461,45 +474,49 @@ int main()
 
 ## 纯 虚函数
 
-1.定义：在基类**定义**一个没有实现的函数<br>🤐🔫：强迫子类实该函数  
-2.有什么用？🤔：这种实现被称为**接口(interface)**,类中只包含未实现的方法作为你继承的模板(所以这个类实际上是无法实例化的，但如果你实现了这些函数，或者继承自一个实现了基类所有函数的子类，这个类就可以被实例化)  
-你需要这个类的实例都具有这些方法(接口)，有点类似Dataset类中需要实现的len, getitem等方法。
+![pure virtual function](markdown_pics/pure_virtual.png "Returnal")
 
-```C++
-#include <iostream>
-#include <string>
+1. 定义：在基类**定义**一个没有实现的函数<br>🤐🔫：强迫子类实现该函数  
+2. 有什么用？🤔：这种实现被称为**接口(interface)**,类中只包含未实现的方法作为你继承的模板(所以这个类实际上是无法实例化的，但如果你实现了这些函数，或者继承自另一个实现了基类所有函数的子类，这个类就可以被实例化)  
+用于当你需要该类的实例都必须具有这些方法(接口)时，有点类似Dataset类中需要实现的len, getitem等方法。
 
-class Pure_virtual
-{
-public:
-    virtual void print_name() = 0;  // 💡纯 虚函数的定义：virtual + ‘= 0’
-};
+   ```C++
+   #include <iostream>
+   #include <string>
 
-class child_virtual : public Pure_virtual  // 若此类中没有实现继承的基类的纯虚函数，便无法实例化
-{
-public:
-    void print_name() override  // 实现纯虚函数
-    {
-        print();
-    }
-    void print()
-    {
-        std::cout << name << std::endl;
-    }
-private:
-    const char* name = "name";
-};
+   class Pure_virtual
+   {
+   public:
+       virtual void print_name() = 0;  // 💡纯 虚函数的定义：virtual + ‘= 0’
+   };
 
-int main()
-{
-    child_virtual cv = new child_virtual();  // 若未实现纯虚函数，这里会报错
-    cv->print();
-    return 0;
-}
->> name
-```
+   class child_virtual : public Pure_virtual  // 若此类中没有实现继承的基类的纯虚函数，便无法实例化
+   {
+   public:
+       void print_name() override  // 子类中实现纯虚函数
+       {
+           print();
+       }
+       void print()
+       {
+           std::cout << name << std::endl;
+       }
+   private:
+       const char* name = "name";
+   };
+
+   int main()
+   {
+       child_virtual* cv = new child_virtual();  // 若未实现纯虚函数，这里会报错
+       cv->print();
+       return 0;
+   }
+   >> name
+   ```
 
 ## Cpp中的可见性
+
+![visibility](markdown_pics/visibility.png "GTFO")
 
 > in brief: **private protected public**  
 > 如`class` `struct`中默认的成员可见性(private, public) <sup>*（**友元类(friend)**可以访问到此类内部的private成员）*</sup>
@@ -507,3 +524,114 @@ int main()
 1. 💡private修饰的成员: **类内部**以及**友元**可访问
 2. 💡protected修饰的成员：**类内部**以及继承至此类的**子类**
 3. public：就是public
+
+## 数组array
+
+![array](markdown_pics/array.png "Death Stranding")
+
+> 将一堆变量放入一个变量当中，连续内存
+1. 初始化方式(静态)，删除方式
+2. 数组地址以及寻址方式
+
+```C++
+#include <array>
+
+int main()
+{
+    int example[5];  /* 初始化在栈，栈初始化时，数组内部不能是一个变量：example[size]这是错误的，
+    数组的size是在编译时就需要知道的常量，所以如果定义 static const size = 5；example[size] works😀*/
+    int* example = new int[5]; // 初始化在堆
+    std::array<int, 5> example;  // C++11初始化
+    ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
+    ⚠ 销毁时：delete[] example; ⚠
+    ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
+
+    此时没有方法获取数组的长度  // C++11提供内置标准库实现std::array可以👇👈
+  👉example.size()
+    但你可以以这种方式获取数组长度：int count = sizeof(example) / sizeof(int);  /* 数组占的字节数/一个单位占字节数，
+    注意：这是仅限于以栈初始化方法的前提下，若传入堆初始化example，前半部分只会得到一个int* 指针占的字节数（4）。*/
+
+    int* int_ptr = example;  // 数组名字实际是数组开始的指针地址，等于example[0]
+    example[2] = 1;  // 实际上是指针从example开始💡 以int为单位(四字节)💡 往后移动2个单位💡
+    
+    example[2]
+    1. 可以写为int_ptr + 2
+    2. 或者(int*)((char*)int_ptr + 8) /* char* 单位占一个字节, int* 单位占4个字节， 注意最后的类型转换。 一般不会这么写，
+    但是指针偏移就是这么个意思。*/
+}
+```
+
+## 字符串
+
+![string](markdown_pics/string.jpg "GTFO")
+
+1. > 💡**固定分配的内存块**，无法改变(const),通常初始化为`const char*`，`std::string初始化后字符串就是这种类型`👇
+
+   ```cpp
+      const char* example = "Cherno";
+   ```
+
+   > 💡实际上就是**字符 数组**，表示、处理文本
+      >> 注：用`char* `表示"字符串"，`char`表示'字符'
+
+   > 💡在内存中的表示为一段连续的、字符串长度个bytes加一个**空终止字符0**,这样就能知道字符串的长度
+      >>eg: 43 68 65 72 6e 6f 00 means: "Cherno"
+   在使用`std::cout`打印数组时遇到**空终止字符0**才会停下,所以在如下创建字符串时需手动创建一个空终止符👇
+
+   ```C++
+   #include <iostream>
+
+   int main()
+   {
+       char example[6] = {'1', '2', '3', '4', '5', 0};
+       // 如果不设置0则在打印字符串后会打印出一堆乱码(乱码在内存中以cc存在，名为栈守卫🗡🗡)
+       std::cout << example << std::endl;
+   }
+
+   ```
+
+2. 💡但你需要使用的是**标准库**中的：
+
+   ```cpp
+   #include <string>
+   /* 在标准库<iostream>中也有string的实现，也可通过std::string初始化，但无法经过std::cout输出，因为不是字符串流，
+   而<string>中将其重载为了字符串流，可以使用std::cout输出*/
+
+   int main()
+   {
+       std::string example = "Cherno";
+       std::cout << example;
+   }
+   ```
+
+3. 字符串的**拼接**：
+
+   ```cpp
+   #include <string>
+
+   int main()
+   {
+       std::string example = "example";
+
+       💀以下这种拼接方法是错误的：
+       std::string example = "example" + "name";  // 因为这实际上是将两个const char*相加，没有这种相加方式
+       💡但以下这种方式是正确的：
+       example += "name";  // 因为string类重载了"+="操作符，使其可用于字符串的拼接
+       💡也可以这样：
+       std::string example = std::string("entity") + "name";  // 显示调用string类的构造函数
+
+       查找字符串中的字符：
+       bool contain = example.find("no") != std::string::npos;  // npos means no position😀
+   }
+   ```
+
+4. 应该尽量**避免字符串的拷贝**，因为字符串拷贝非常的慢。函数传参时使用reference：
+   ```cpp
+   #include <string>
+   #include <iostream>
+
+   void print_string(const std::string& example)  // const是为了避免修改
+   {
+       std::cout << example << std::endl;
+   }
+   ```
