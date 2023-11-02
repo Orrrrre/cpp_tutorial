@@ -635,3 +635,23 @@ int main()
        std::cout << example << std::endl;
    }
    ```
+
+5. 字符串**字面量**
+   就是指“”中的字符串，它存储在内存中的只读区域（**常量区const segmentation**），因此是不能被修改的。
+
+   ```cpp
+   int main()
+   {    // 💡
+        const char* name = u8"Cherno";  // utf-8
+        const wchar_t* name = L"Cherno";  // 2Bytes Windows, 4Bytes Linux
+        const char16_t* name = u"Cherno";  // utf-16 always 2Bytes, use this😀
+        const char32_t* name = U"Cherno";  // utf-32
+
+        // 💡prefix 'R' means ignore the 转义字符。⚠："（）"是必须添加的
+        const char* line = R"(line1
+    line2
+    line3)";  // its easier than this👇
+        const char* line = "line1\nline2\nline3\n";
+        std::cout << line << std::endl;
+   } 
+   ```
