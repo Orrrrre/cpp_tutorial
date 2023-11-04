@@ -662,3 +662,38 @@ int main()
         std::cout << line << std::endl;
    } 
    ```
+
+## Const
+
+> 实际上是一种代码规范，并未对代码生成产生什么影响（fake keyword）
+> 类似于做出一个promise，既然是promise，那么是可以被打破的😈
+
+💡const的常见用法（不允许修改指针指向的内存区域的值,可被break的承诺😈）
+
+```cpp
+#include <iostream>
+#include <string>
+#include <cassert>
+
+int main()
+{
+    const int max_age = 9;
+    // example = 2;  // 错误的
+
+    /* 虽然不能直接修改指针指向的内存区域的值，但可以创建一个非const指针指向这个内存区域，
+    通过这个指针对其内容进行修改 */
+    int* a = new int;
+    *a = 2;  // 因为没有用const修饰，因此a指向的内存是可被修改(modify)的。
+    
+    a = (int*)&max_age;  // 打破：将一个非const指针指向这个内存，并通过这个指针修改内存值。
+    *a = 8;
+
+    // 以下两种输出结果不同🤔，但打印出的指针地址是相同的，暂时不明白
+    std::cout << *a << *&max_age << std::endl;
+    std::cout << *a << max_age << std::endl;
+    std::cout << a << ' ' << &max_age << std::endl;
+}
+>> 89
+>> 88
+>> 0x61fe14 0x61fe14
+```
