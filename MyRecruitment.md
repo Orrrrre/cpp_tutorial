@@ -888,3 +888,69 @@ int main()
     fun();
 }
 ```
+
+## 使用**初始化成员列表**，让你的类初始化更加高效😃
+
+这个机制的目的是在进入构造函数体之前对成员变量进行初始化，以确保成员变量在构造函数内部的所有操作之前都有一个已知  
+的、确定的值。
+
+> 情景描述：你创建了一个类Example，这个类中有一个Entity类的成员变量，你需要在初始化函数中初始化这个变量，但这个成员变量有自己的初始化函数
+
+```cpp
+#include <iostream>
+#include <string>
+
+class Entity  // example中成员变量所属的类
+{
+public:
+    Entity()
+    {
+        std::cout << "create entity" << std::endl;  // 每一次初始化都打印一次方便查看初始化次数
+    }
+
+    Entity(std::string x)
+    {
+        std::cout << "CREATE ENTITY WITH " << x << "!" << std::endl;  /* 每一次初始化都打印一次方便
+        查看初始化次数 */
+    }
+};
+
+class Example
+{
+private:
+    Entity create;  // 成员变量的某一初始化函数需要传入一个值，这里初始化了一次未传参
+    int a;
+public:
+    Example()
+    {
+        create = Entity("e");  /* 在初始化函数内部进行传参初始化：这种初始化方式实际上
+        调用了两次初始化函数创建了两个实例但将第一个创建对象丢弃了 ！耗费资源 ！*/
+    }
+};
+
+int main()
+{
+    Example e;
+}
+>> create entity
+>> CREATE ENTITY WITH e!
+
+这时候就应该使用初始化成员列表：
+class Example
+{
+private:
+    Entity create;
+    int a;
+public:
+    Example() : create(Entity("e"))  // 也可写作Example() : create("e")；只在这里进行了一次传参初始化👍
+    {
+        
+    }
+};
+
+int main()
+{
+    Example e;
+}
+>> CREATE ENTITY WITH e!
+```
