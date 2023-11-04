@@ -677,8 +677,8 @@ int main()
 
 int main()
 {
-    const int max_age = 9;
-    // example = 2;  // 错误的
+    const int max_age = 9;  // const int 等于 int const
+    example = 2;  // 错误的
 
     /* 虽然不能直接修改指针指向的内存区域的值，但可以创建一个非const指针指向这个内存区域，
     通过这个指针对其内容进行修改 */
@@ -687,8 +687,9 @@ int main()
     
     a = (int*)&max_age;  // 打破：将一个非const指针指向这个内存，并通过这个指针修改内存值。
     *a = 8;
+    assert(a == &example);
 
-    // 以下两种输出结果不同🤔，但打印出的指针地址是相同的，暂时不明白
+    // 以下两种输出结果不同🤔，但打印出的指针地址是相同的，暂时不明白，可能是常量立即输出🤔？,总之尽量避免修改const的行为
     std::cout << *a << *&max_age << std::endl;
     std::cout << *a << max_age << std::endl;
     std::cout << a << ' ' << &max_age << std::endl;
@@ -696,4 +697,139 @@ int main()
 >> 89
 >> 88
 >> 0x61fe14 0x61fe14
+```
+
+💡const：将指针与内存绑定，不允许将次指针指向其它内存，但这个指针指向的内存可被修改
+
+```cpp
+#include <iostream>
+#include <string>
+#include <cassert>
+
+int main()
+{
+    int max_age = 9;
+    int* const a = new int;
+    a = &max_age;  // 错误的：不可更改指针的指向
+    *a = 8;  // 可修改指向的内存值
+
+    std::cout << *a << *&max_age << std::endl;
+    std::cout << *a << max_age << std::endl;
+    std::cout << a << ' ' << &max_age << std::endl;
+}
+>> 89
+>> 89
+>> 0xfb4120 0x61fe14
+```
+
+💡const的终极版💥:既不能修改指针指向，也不能修改指向的内存
+
+```cpp
+#include <iostream>
+#include <string>
+#include <cassert>
+
+int main()
+{
+    int max_age = 9;
+    const int* const a = new int(8);
+    // a = (const int* const)&max_age;  // 错误：表达式必须是可修改的左值
+    // 但是方法一中的bypass仍然有用：
+    int* e = (int*)a;
+    *e = 7;
+
+    std::cout << *a << *&max_age << std::endl;
+    std::cout << *a << max_age << std::endl;
+    std::cout << a << ' ' << &max_age << std::endl;
+}
+>> 79
+>> 79
+>> 0xea4120 0x61fe0c
+```
+
+💡const仅存在于类中的一种用法
+
+```cpp
+#include <iostream>
+#include <tuple>
+
+class example
+{
+public:
+    std::tuple<int, int> read_only() const // 用const标记的成员函数只能读取类成员，无法修改；
+    {
+        // x = 3;  // 错误的：表达式必须是可修改的左值
+        std::cout << x << ' ' << y << std::endl;
+        std::tuple<int, int> xy = std::make_tuple(x, y);
+        return xy;
+    }
+    void modify()
+    {
+        x = 3;
+        y = 4;
+    }
+private:
+    int x = 1, y = 2;
+};
+
+int main()
+{
+    example e;
+    e.read_only();
+    e.modify();
+    e,read_only();
+}
+>> 1 2
+>> 3 4
+```
+
+💡class中的情况二，函数中传入类型参数为const修饰时  
+调用该类的函数时，被调用的成员函数必须是const修饰的。
+
+```cpp
+#include <iostream>
+#include <string>
+#include <cassert>
+#include <tuple>
+
+class example
+{
+public:
+    std::tuple<int, int> read() const
+    {
+        std::cout << x << ' ' << y << std::endl;
+        std::tuple<int, int> xy = std::make_tuple(x, y);
+        return xy;
+    }
+
+    std::tuple<int, int> read()
+    {
+        std::cout << x << ' ' << y << std::endl;
+        std::tuple<int, int> xy = std::make_tuple(x, y);
+        return xy;
+    }
+    void modify()
+
+    {
+        x = 3;
+        y = 4;
+    }
+private:
+    int x = 1, y = 2;
+};
+
+void PrintExample(const example& e) /* 若这里声明传入的是const修饰的参数，那默认这个参数不能被修改
+在调用该参数方法时，这个方法必须是const的。若这个成员方法没有const修饰的，那可能会在方法内部改变这个传入实例，
+这是不被允许的。
+因此通常会在类内部实现两个该函数版本，一个带const，一个不带。
+当遇到函数要求传入参数为const，并在函数内调用该参数的方法时会自动选择调用const方法 */
+{
+    e.read();
+}
+
+int main()
+{
+    example e;
+    PrintExample(e);
+}
 ```
