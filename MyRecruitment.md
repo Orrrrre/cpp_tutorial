@@ -1017,7 +1017,7 @@ private:
     std::string Name;
     int Age;
 public:
-    Entity(const std::string& name)  // 注意这里一定要写上const(左右值相关限定条件👇)
+    Entity(const std::string& name)  // 注意这里在用引用的时候一定要写上const(左右值相关限定条件👇)
      : Name(name), Age(-1) {}  // -1表示无效
     Entity(int age)
      : Name("Unknown"), Age(age) {}
