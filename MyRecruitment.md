@@ -1017,7 +1017,7 @@ private:
     std::string Name;
     int Age;
 public:
-    Entity(const std::string& name)  // 注意这里一定要写上const
+    Entity(const std::string& name)  // 注意这里一定要写上const(左右值相关限定条件👇)
      : Name(name), Age(-1) {}  // -1表示无效
     Entity(int age)
      : Name("Unknown"), Age(age) {}
@@ -1025,7 +1025,10 @@ public:
 
 int main()
 {
-    Entity e("Cherno");  // 默认“Cherno”是const char[]类型，不是std::string，这里进行了一次隐式转换
+    Entity e  = "Cherno";  /* ❌这是错误的：因为默认“Cherno”是const char[]类型，不是std::string，这里需要发生了两次隐式转换才正确，但是两次隐式转换是不允许的
+    chonst char 👉 std::string 👉 Entity */
+
+    Entity e("Cherno");
     Entity e(10);  // 把传入的整数传递给参数为整数的构造函数
 }
 
@@ -1033,6 +1036,7 @@ int main()
 
 ❗这里涉及到一个**左值**(可以取地址的值)、**右值**(不可取地址的值)的问题：
 > 你可以使用左值引用绑定左值，但不能将其绑定到右值上，这是为了避免潜在的问题。
+> 左值引用不能绑定到右值，因为**右值通常没有明确定义的生命周期**，所以它们的地址可能在引用之后无效。右值引用可以绑定到右值，因为它们被设计用来处理这种情况。
 
 💡仔细观察上方类的构造函数：
 1. 在Name赋值的构造函数中：传入的是一个常值的引用，(下面的第二个❗)，这是不会错的：  
@@ -1059,6 +1063,6 @@ int main()
 
     int main()
     {
-        Entity a(22);  // 22实际上就是右值
+        Entity a(22);  // 22实际上是一个右值
     }
     ```
