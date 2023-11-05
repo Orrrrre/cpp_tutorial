@@ -954,3 +954,51 @@ int main()
 }
 >> CREATE ENTITY WITH e!
 ```
+
+💡`using关键字`:
+> `using String = std::string;`
+
+## new
+
+1. 用于在堆内存上初始化对象;  
+2. `new`不但**分配了空间**，同时还调用了类的**构造函数**
+3. `placement new`:在指定内存上初始化类对象
+
+```cpp
+#include <iostream>
+
+using string = std::string;
+
+class Example
+{
+private:
+    string ex;
+public:
+    Example()
+     : ex("Unknown")
+     {
+
+     }
+    Example(string s)
+     : ex(s)
+    {
+
+    }
+};
+
+int main()
+{
+    int* a = new int;  // 使用delete a;删除
+    int* b = new int[50];  // 使用delete[] b;删除
+
+    Example* e = new Example;  // 无参初始化是可行的，前提是定义了无参初始化函数
+    Example e("example");
+
+    Example* e = new Example("example");  // 有参数初始化
+
+    Example* e = (Example*)malloc(sizeof(Example));  // 只分配了空间，并未调用类的初始化函数
+
+    // placement new
+    Example* e = new(b) Example;
+}
+```
