@@ -1005,6 +1005,7 @@ int main()
 
 ## explicit
 
+> 在类中构造函数的前面添加expplicit关键字可以禁止发生隐式转换
 代码的隐式转换：
 
 ```cpp
