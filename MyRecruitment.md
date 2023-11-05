@@ -1002,3 +1002,63 @@ int main()
     Example* e = new(b) Example;
 }
 ```
+
+## explicit
+
+代码的隐式转换：
+
+```cpp
+#include <iostream>
+#include <string>
+
+class Entity
+{
+private:
+    std::string Name;
+    int Age;
+public:
+    Entity(const std::string& name)  // 注意这里一定要写上const
+     : Name(name), Age(-1) {}  // -1表示无效
+    Entity(int age)
+     : Name("Unknown"), Age(age) {}
+};
+
+int main()
+{
+    Entity e("Cherno");  // 默认“Cherno”是const char[]类型，不是std::string，这里进行了一次隐式转换
+    Entity e(10);  // 把传入的整数传递给参数为整数的构造函数
+}
+
+```
+
+❗这里涉及到一个**左值**(可以取地址的值)、**右值**(不可取地址的值)的问题：
+> 你可以使用左值引用绑定左值，但不能将其绑定到右值上，这是为了避免潜在的问题。
+
+💡仔细观察上方类的构造函数：
+1. 在Name赋值的构造函数中：传入的是一个常值的引用，(下面的第二个❗)，这是不会错的：  
+> 如果你希望能够将右值绑定到引用，❗可以使用右值引用`int&&`，或者❗将引用声明为`const`左值引用，如`const int&`。
+2. 下面的方法：
+
+    ```cpp
+    class Entity
+    {
+    private:
+        std::string Name;
+        int Age;
+    public:
+        Entity(const std::string& name)
+         : Name(name), Age(-1) {}
+
+        //写法一
+        Entity(int&& age)
+         : Name("Unknown"), Age(age) {}
+        //写法二
+        Entity(const int& age)
+         : Name("Unknown"), Age(age) {}
+    };
+
+    int main()
+    {
+        Entity a(22);  // 22实际上就是右值
+    }
+    ```
