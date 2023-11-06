@@ -1171,6 +1171,47 @@ int main()
 }
 
 ```
+那么如何重载标准输出的符号：“<<”？(提示：`std::ostream`)
+如何重载标准输出流符号"<<":  
+👉如果我想将example类作为一个可直接通过<<打印的类对象...
+
+💢注意：`std::cout`是一个**全局的变量**  
+我们重载这个符号是针对std::cout(std::ostream类)，而cout是一个全局变量。
+有一些运算符只能在类外部重载，其中包括 `operator<<`（输出运算符）。这是因为 `operator<<` 通常用于输出到标准输出或文件流等，而这些流是标准库提供的**全局对象**。因此，为了能够正确地重载 `operator<<` 以输出类的对象，通常需要在类外部重载，而不是在类内部。  
+> **必须在类外部重载**的运算符：
+   1. **流**插入运算符 **<<**，例如 `operator<<`，通常用于输出对象。
+   2. **流**提取运算符 **>>**，例如 `operator>>`，通常用于从输入流中读取对象。
+   3. **函数调用**运算符 **()**，例如 `operator()`，用于使对象像函数一样调用。
+   4. **类型转换**运算符，例如 operator **int()**，用于将对象转换为其他类型。
+   5. **递增**和**递减**运算符 **++** 和 **--**，例如 `operator++` 和 `operator--`。
+
+```cpp
+#include <iostream>
+
+class example
+{
+private:
+    int x, y;
+public:
+    example()
+        : x(-1), y(-1) {}
+    example(int a, int b)
+        : x(a), y(b) {}
+    friend std::ostream& operator<<(std::ostream& stream, const example& e);
+};
+
+std::ostream& operator<<(std::ostream& stream, const example& e)
+{
+    stream << e.x << " " << e.y;
+    return stream;
+}
+
+int main()
+{
+    example e(1, 2);
+    std::cout << e;
+}
+```
 
 ## 作用域
 
@@ -1331,4 +1372,198 @@ int main()
 >> Create example
 >> 0x25b1de0 0x25b1de0
 >> destroy example 
+```
+
+## 拷贝构造函数
+
+1. `strlen()`
+2. `memcpy()`
+3. `strcpy()`:在copy时会在后面添加终止字符`\0`
+
+```cpp
+#include <iostream>
+#include <cstring>
+
+class String
+{
+private:
+    char* string_buffer;
+    unsigned int string_size;
+public:
+    String(const char* string)
+    {
+        string_size = strlen(string);
+        string_buffer = new char[string_size + 1];  // 加一个终止符
+        memcpy(string_buffer, string, string_size + 1);
+    }
+
+    ~String()
+    {
+        delete[] string_buffer;
+    }
+    friend std::ostream& operator<<(std::ostream& stream, const String str_);
+};
+
+std::ostream& operator<<(std::ostream& stream, const String str_)
+{
+    stream << str_.string_buffer;
+    return stream;
+}
+
+int main()
+{
+    String s_ = "Cherno";
+    std::cout << s_;
+}
+```
+
+到此为止这个程序运行正常，但是其具有潜在的风险：  
+当在进行子不传拷贝赋值的时候：👇
+
+```cpp
+int main()
+{
+    String s_ = "Cherno";
+    String s_copy = s_;
+    std::cout << s_;
+}
+```
+
+实际上C++将`s_`中的成员变量复制了一份给`s_copy`,执行的是**浅拷贝**，仅仅拷贝了指针。  
+因此在main函数执行完时，两个实例的析构函数同时执行了释放内存的操作，并且释放的是同一块  
+内存，同一块内存被释放两次👉`CRASHED!`  
+
+所以我们需要做的是什么呢：😃👉禁止拷贝👈😃
+
+```cpp
+class String
+{
+private:
+    char* string_buffer;
+    unsigned int string_size;
+public:
+    String(const char* string)
+    {
+        string_size = strlen(string);
+        string_buffer = new char[string_size + 1];  // 加一个终止符
+        memcpy(string_buffer, string, string_size + 1);
+    }
+
+    ~String()
+    {
+        delete[] string_buffer;
+    }
+
+    // 这就是拷贝构造函数
+    String(const String& other) = delete;
+};
+```
+
+😃👉问题解决👈😃
+
+当然不是，最重要的是：在进行复制拷贝的时候，为第二个实例真实创建一个**新的内存块**  
+即 **深拷贝**，这里就用到了**拷贝构造函数**。
+
+```cpp
+class String
+{
+private:
+    char* string_buffer;
+    unsigned int string_size;
+public:
+    String(const char* string)
+    {
+        string_size = strlen(string);
+        string_buffer = new char[string_size + 1];  // 加一个终止符
+        memcpy(string_buffer, string, string_size + 1);
+    }
+
+    ~String()
+    {
+        delete[] string_buffer;
+    }
+
+    char& operator[](const int& position)  // 重载一个位置索引符号
+    {
+        return string_buffer[position];
+    }
+
+    // 这就是拷贝构造函数,但这样做实际上只是执行了浅拷贝，C++默认就是这样做
+    String(const String& other)
+        : string_size(other.string_size), string_buffer(other.string_buffer) {}
+
+    // 应该这样👇
+    String(const String& other)  // other是你copy的原对象
+        : string_size(other.string_size)
+    {
+        string_buffer = new char[string_size + 1];
+        memcpy(string_buffer, other.string_buffer, string_size);
+    }
+};
+
+int main()
+{
+    String s_ = "Cherno";
+    String s_copy = s_;
+    s_copy[2] = 'a';
+    std::cout << s_ << ' ' << s_copy << std::endl;
+}
+>> cherno charno
+```
+
+当通过外部函数打印我们创建的string类的时候记得传入reference，防止拷贝的发生
+```cpp
+class String
+{
+private:
+    char* string_buffer;
+    unsigned int string_size;
+public:
+    String(const char* string)
+    {
+        string_size = strlen(string);
+        string_buffer = new char[string_size + 1];  // 加一个终止符
+        memcpy(string_buffer, string, string_size + 1);
+    }
+
+    ~String()
+    {
+        delete[] string_buffer;
+    }
+
+    String(const String& other)  // other是你copy的原对象
+        : string_size(other.string_size)
+    {
+        string_buffer = new char[string_size + 1];
+        memcpy(string_buffer, other.string_buffer, string_size);
+    }
+
+    char& operator[](const int& position)  // 重载一个位置索引符号
+    {
+        return string_buffer[position];
+    }
+
+    friend void Printstring(String& string);  // 访问私有成员
+};
+
+void Printstring(const String& string)  // 标记const在每次我们函数不需要编辑传入参数时
+{
+    std::cout << string.string_buffer << std::endl;
+}
+void Printstring_right(String&& string)  // 使用右值打印
+{
+    std::cout << string.string_buffer << std::endl;
+}
+int main()
+{
+    String s_ = "Cherno";
+    String s_copy = s_;
+    s_copy[2] = 'a';
+    Printstring(s_);
+    Printstring(s_copy);
+    Printstring_right("Cheerno");
+}
+>> Cherno
+>> Charno
+>> Cheerno
 ```
