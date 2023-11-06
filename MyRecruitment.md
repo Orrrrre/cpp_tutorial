@@ -1040,9 +1040,12 @@ int main()
 > 左值引用不能绑定到右值，因为**右值通常没有明确定义的生命周期**，所以它们的地址可能在引用之后无效。右值引用可以绑定到右值，因为它们被设计用来处理这种情况。
 
 💡仔细观察上方类的构造函数：
+
 1. 在Name赋值的构造函数中：传入的是一个常值的引用，(下面的第二个❗)，这是不会错的：  
-> 如果你希望能够将右值绑定到引用，❗可以使用右值引用`int&&`，或者❗将引用声明为`const`左值引用，如`const int&`。
-2. 下面的方法：
+
+    > 如果你希望能够将右值绑定到引用，❗可以使用右值引用`int&&`，或者❗将引用声明为`const`左值引用，如`const int&`。
+
+2. 如下面的实现：
 
     ```cpp
     class Entity
@@ -1067,3 +1070,265 @@ int main()
         Entity a(22);  // 22实际上是一个右值
     }
     ```
+
+## 重载操作符
+
+> 实现一个操作符功能的重构建
+
+如果想实现一个类间成员的分别加、乘操作，常规方法如下：
+
+```cpp
+#include <iostream>
+
+class Example
+{
+private:
+    int x, y;
+public:
+    Example(int x_param, int y_param)
+         : x(x_param), y(y_param) {}
+
+    Example Add(const Example* others) const  // 实现对应位置加的逻辑函数
+    {
+        return Example(x + others->x, y + others->y);
+    }
+
+    Example Multiple(const Example* others) const  // 实现对应位置乘的逻辑函数
+    {
+        return Example(x * others->x, y * others->y);
+    }
+
+    void Print() const
+    {
+        std::cout << this->x << ' ' << this->y << std::endl;
+    }
+};
+
+int main()
+{
+    Example a(3, 2);
+    Example b(4, 6);
+
+    Example add_ = a.Add(&b);
+    Example mult_ = a.Multiple(&b);
+
+    add_.Print();
+    mult_.Print();
+}
+>> 7 8
+>> 12 12
+```
+
+💡使用运算符重载后的代码看起来更加简洁，可读性更强：
+
+```cpp
+#include <iostream>
+
+class Example
+{
+private:
+    int x, y;
+public:
+    Example(int x_param, int y_param)
+         : x(x_param), y(y_param) {}
+
+    Example Add(const Example& others) const
+    {
+        return Example(x + others.x, y + others.y);
+    }
+
+    Example operator+ (const Example& others) const  // 重载+
+    {
+        return Add(others);
+    }
+
+    Example Multiple(const Example& others) const
+    {
+        return Example(x * others.x, y * others.y);
+    }
+
+    Example operator* (const Example& others) const  // 重载*
+    {
+        return Multiple(others);
+    }
+
+    void Print() const
+    {
+        std::cout << this->x << ' ' << this->y << std::endl;
+    }
+};
+
+int main()
+{
+    Example a(3, 2);
+    Example b(4, 6);
+
+    Example add_ = a + b;  // 使用重载符号+
+    Example mult_ = a * b;  // 使用重载符号*
+
+    add_.Print();
+    mult_.Print();
+}
+
+```
+
+## 作用域
+
+> 利用作用域创建一个可根据作用域自行销毁的堆内存
+
+一般情况下，分配在堆上的内存需要手动释放：
+
+```cpp
+#include <iostream>
+
+class Example
+{
+private:
+    int e;
+public:
+    Example()
+     : e(-1)
+    {
+        std::cout << "Create example" << std::endl;
+    }
+    
+    ~Example()
+    {
+        std::cout << "destroy example" << std::endl;
+    }
+};
+
+int main()
+{
+    {
+        Example* e = new Example();  // 即使是创建在栈上面，退出作用域后也不会被释放掉
+    }
+    
+}
+>> Create example
+```
+
+```cpp
+#include <iostream>
+
+class Example
+{
+private:
+    int e;
+public:
+    Example()
+     : e(-1)
+    {
+        std::cout << "Create example" << std::endl;
+    }
+    
+    ~Example()
+    {
+        std::cout << "destroy example" << std::endl;
+    }
+};
+
+/* 创建一个能够自动销毁的作用域类：接受一个需要包裹的类指针(Example* ptr)并传给成员变量Example* e_ptr，
+在析构函数中销毁这个指针(成员变量) */
+class ScopePtr
+{
+private:
+    Example* e_ptr;
+public:
+    ScopePtr(Example* ptr)
+     : e_ptr(ptr){}
+
+    ~ScopePtr()
+    {
+        delete e_ptr;
+    }
+};
+
+int main()
+{
+    {
+        ScopePtr s_ptr = new Example();  // 用到了隐式转换
+    }
+}
+>> Create example
+>> destroy example
+```
+
+## Smart Pointer(#include \<memory>)
+
+> 自动化内存分配和释放这一过程😄
+
+1. **unique**_ptr(Scope Pointer)
+
+> 超出作用域就销毁：因此你**不能复制**这种指针(一旦你复制了指针，那么在其中一个指针销毁掉内存时，另一个指向这段内存的的指针，就无意义了，会发生一些难以预计的情况 That's why it is unique)
+
+```cpp
+#include <iostream>
+#include <memory>
+
+class Example
+{
+private:
+    int e;
+public:
+    Example()
+     : e(-1)
+    {
+        std::cout << "Create example" << std::endl;
+    }
+    
+    ~Example()
+    {
+        std::cout << "destroy example" << std::endl;
+    }
+};
+
+int main()
+{
+    ❌std::unique_ptr<Example> e_ptr();  // 这样就行了🤔，错误的
+
+    std::unique_ptr<Example> e_ptr(new Example());  // 在unique_ptr中需要显示调用构造函数，因为声明了explicit
+    // 或者
+    std::unique_ptr<Example> e_ptr = std::make_unique<Example>();  // 稍微安全一点
+}
+```
+
+2. shared_ptr
+
+> 引用计数：跟踪你的指针有多少个引用，引用为0的时候被删除。允许复制  
+会另外开辟一个内存区域用来存储引用计数
+
+```cpp
+#include <iostream>
+#include <memory>
+
+class Example
+{
+private:
+    int e;
+public:
+    Example()
+     : e(-1)
+    {
+        std::cout << "Create example" << std::endl;
+    }
+    
+    ~Example()
+    {
+        std::cout << "destroy example" << std::endl;
+    }
+};
+
+int main()
+{
+    std::shared_ptr<Example> s_ptr = std::make_shared<Example>();
+    std::shared_ptr<Example> s_ptr(new Example());  // 这样实际上会先创建一个Example实例，再将这个实例传递给shared_ptr，不如上面哪种方式高效。
+
+    // Copy
+    std::shared_ptr<Example> copy_s_ptr = s_ptr;
+    std::cout << copy_s_ptr << " " << s_ptr << std::endl;
+}
+>> Create example
+>> 0x25b1de0 0x25b1de0
+>> destroy example 
+```
