@@ -627,7 +627,7 @@ int main()
        std::string example = std::string("entity") + "name";  // 显示调用string类的构造函数
 
        查找字符串中的字符：
-       bool contain = example.find("no") != std::string::npos;  // npos means no position
+       bool contain = example.find("no") != std::string::npos;
    }
    ```
 
@@ -678,7 +678,7 @@ int main()
 int main()
 {
     const int max_age = 9;  // const int 等于 int const
-    example = 2;  // 错误的
+    max_age = 2;  // 错误的
 
     /* 虽然不能直接修改指针指向的内存区域的值，但可以创建一个非const指针指向这个内存区域，
     通过这个指针对其内容进行修改 */
@@ -689,7 +689,8 @@ int main()
     *a = 8;
     assert(a == &example);
 
-    // 以下两种输出结果不同🤔，但打印出的指针地址是相同的，暂时不明白，可能是常量立即输出🤔？,总之尽量避免修改const的行为
+    /* 以下两种输出结果不同🤔，但打印出的指针地址是相同的，暂时不明白，可能是常量立即输出🤔？,
+    总之尽量避免修改const的行为 */
     std::cout << *a << *&max_age << std::endl;
     std::cout << *a << max_age << std::endl;
     std::cout << a << ' ' << &max_age << std::endl;
@@ -699,7 +700,7 @@ int main()
 >> 0x61fe14 0x61fe14
 ```
 
-💡const：将指针与内存绑定，不允许将次指针指向其它内存，但这个指针指向的内存可被修改
+💡const：将指针与内存绑定，不允许将此指针指向其它内存，但这个指针指向的内存可被修改
 
 ```cpp
 #include <iostream>
@@ -747,7 +748,7 @@ int main()
 >> 0xea4120 0x61fe0c
 ```
 
-💡const仅存在于类中的一种用法
+💡const存在于类中的一种用法
 
 ```cpp
 #include <iostream>
@@ -869,7 +870,7 @@ int main()
     int x = 0;
     auto fun = [=]()
     {
-        int y = x;  // 新创建一个值，并输出这个值
+        int y = x;  // 新创建一个值，并输出这个值，将传入右值赋给一个左值
         y = 3
         std::cout << y << std::endl;
     };
@@ -1418,7 +1419,7 @@ int main()
 ```
 
 到此为止这个程序运行正常，但是其具有潜在的风险：  
-当在进行子不传拷贝赋值的时候：👇
+当在进行拷贝赋值的时候：👇
 
 ```cpp
 int main()
@@ -1566,4 +1567,128 @@ int main()
 >> Cherno
 >> Charno
 >> Cheerno
+```
+
+重载“->”:
+
+想让包裹的Scope_ptr能够像原指针一样使用->调用类成员
+
+```cpp
+#include <iostream>
+#include <memory>
+
+class Example
+{
+private:
+    int e, f, g;
+public:
+    Example()
+     : e(-1), f(-1), g(-1)
+    {
+        std::cout << "Create example" << std::endl;
+    }
+
+    void Print_example() const
+    {
+        std::cout << this->e << " " << this->f << std::endl;
+    }
+
+    ~Example()
+    {
+        std::cout << "destroy example" << std::endl;
+    }
+};
+
+class Scope_ptr
+{
+private:
+    Example* scope_e;
+public:
+    Scope_ptr(Example* e)
+        : scope_e(e) {}
+    
+    ~Scope_ptr()
+    {
+        delete scope_e;
+    }
+
+    const Example* operator->() const  // 重载
+    {
+        return scope_e;
+    }
+};
+
+int main()
+{
+    Scope_ptr s_e = new Example();
+    s_e->Print_example();  // 像原指针类别一样使用"->"
+}
+
+```
+
+💡通过`->`访问成员的偏移量
+> 因为"指针`->`属性"访问属性的方法实际上是通过**把指针的值**和**属性的偏移量**相加，得到属性的内存地址进而实现访问。  
+>
+> 把指针设为nullptr(0)，然后`->属性`就等于`0+属性偏移量`。编译器能知道你指定属性的偏移量是因为你把nullptr转换为类指针，而这个类的结构你已经写出来了(float x,y,z)，float4字节，所以它在编译的时候就知道偏移量(0,4,8)，所以无关对象是否创建
+
+```cpp
+#include <iostream>
+#include <memory>
+
+struct see_offset
+{
+    float a, b, c;
+};
+
+int main()
+{
+    see_offset* so;
+    long long offset = (long long)&((see_offset*)nullptr)->a;  // 若将long long替换为int会报错👇
+    std::cout << offset << std::endl;
+}
+
+```
+
+> 👆`error: cast from 'int*' to 'int' loses precision [-fpermissive]
+    int offset = (int)&((see_offset*)nullptr)->a;`  
+    出现cast错误（精度缺失），原因是你使用的**系统为64位，指针大小为8字节**，而你**强转为4字节的int，丢失了4字节的数据**，编译器认为这是一个错误。
+
+## std::vector(ArrayList) #include \<vector>
+
+1. `std::vector<T> vec`
+2. `vec.push_back()`
+3. `vec.erase(iter)` `vec.begin()`
+4. `vec.clear()`
+
+```cpp
+#include <iostream>
+#include <vector>
+
+struct vertex
+{
+    int a, b, c;
+};
+
+std::ostream& operator<<(std::ostream& stream, const vertex& vec)
+{
+    stream << vec.a << ',' << vec.b << ',' << vec.c << std::endl;
+    return stream;
+}
+
+int main()
+{
+    std::vector<vertex> vertices;
+    vertices.push_back({1, 3, 5});
+    vertices.push_back({2, 4, 6});
+
+    vertices.erase(vertices.begin() + 1);  /* erase接受一个迭代器，vertices.begin()返回一个迭代器；
+    这里表示删除第二个元素 */
+
+    vertices.clear();
+    
+    for(const vertex& v : vertices)  // 这个for loop表达式不用ref会发生复制
+    {
+        std::cout << v;
+    }
+}
 ```
